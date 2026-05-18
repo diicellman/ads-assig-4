@@ -1,38 +1,17 @@
 public class Main {
-    
     public static void main(String[] args) {
-        WeightedGraph<String> weightedGraph = new WeightedGraph<>(true);
-        fillWithWeights(weightedGraph);
+        WeightedGraph<String> graph = new WeightedGraph<>(true);
+        fillWithWeights(graph);
 
         System.out.println("Dijkstra:");
-        Search<String> djk = new DijkstraSearch<>(weightedGraph, "Almaty");
-        outputPath(djk, "Kyzylorda");
-
-
-        System.out.println("--------------------------------");
-
-        UnweightedGraph<String> graph = new UnweightedGraph<>(true);
-        fillWithoutWeights(graph);
-
-        System.out.println("DFS:");
-        Search<String> dfs = new DepthFirstSearch<>(graph, "Almaty");
-        outputPath(dfs, "Kyzylorda");
+        Search<String> dijkstra = new DijkstraSearch<>(graph, "Almaty");
+        outputPath(dijkstra, "Kyzylorda");
 
         System.out.println("--------------------------------");
 
         System.out.println("BFS:");
         Search<String> bfs = new BreadthFirstSearch<>(graph, "Almaty");
         outputPath(bfs, "Kyzylorda");
-    }
-
-    public static void fillWithoutWeights(UnweightedGraph<String> graph) {
-        graph.addEdge("Almaty", "Astana"); // 16 - 19
-        graph.addEdge("Shymkent", "Atyrau");
-        graph.addEdge("Atyrau", "Astana");
-        graph.addEdge("Almaty", "Shymkent");
-        graph.addEdge("Shymkent", "Astana");
-        graph.addEdge("Astana", "Kostanay");
-        graph.addEdge("Shymkent", "Kyzylorda");
     }
 
     public static void fillWithWeights(WeightedGraph<String> graph) {
@@ -46,11 +25,21 @@ public class Main {
     }
 
     public static void outputPath(Search<String> search, String key) {
-        for (String v : search.pathTo(key)) {
-            System.out.print(v + " -> ");
+        if (!search.hasPathTo(key)) {
+            System.out.println("No path");
+            return;
+        }
+
+        boolean first = true;
+        for (String vertex : search.pathTo(key)) {
+            if (!first) {
+                System.out.print(" -> ");
+            }
+
+            System.out.print(vertex);
+            first = false;
         }
 
         System.out.println();
     }
 }
-

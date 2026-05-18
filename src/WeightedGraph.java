@@ -1,8 +1,12 @@
-import java.util.*;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 
-public class WeightedGraph<Vertex> {
+public class WeightedGraph<T> {
     private final boolean undirected;
-    private final Map<Vertex, List<Edge<Vertex>>> map = new HashMap<>();
+    private final Map<T, Vertex<T>> vertices;
 
     public WeightedGraph() {
         this(true);
@@ -10,73 +14,108 @@ public class WeightedGraph<Vertex> {
 
     public WeightedGraph(boolean undirected) {
         this.undirected = undirected;
+        vertices = new LinkedHashMap<>();
     }
 
-    public void addVertex(Vertex v) {
-        if (hasVertex(v))
+    public void addVertex(T data) {
+        Objects.requireNonNull(data, "data");
+
+        if (hasVertex(data)) {
             return;
+        }
 
-        map.put(v, new LinkedList<>());
+        vertices.put(data, new Vertex<>(data));
     }
 
-    public void addEdge(Vertex source, Vertex dest, double weight) {
-        if (!hasVertex(source))
-            addVertex(source);
+    public void addEdge(T source, T destination, double weight) {
+        Objects.requireNonNull(source, "source");
+        Objects.requireNonNull(destination, "destination");
 
-        if (!hasVertex(dest))
-            addVertex(dest);
+        if (weight < 0) {
+            throw new IllegalArgumentException("Dijkstra requires non-negative weights");
+        }
 
-        if (hasEdge(source, dest)
-                || source.equals(dest))
-            return; // reject parallels & self-loops
+        if (source.equals(destination)) {
+            return;
+        }
 
-        map.get(source).add(new Edge<>(source, dest, weight));
+        Vertex<T> sourceVertex = getOrCreateVertex(source);
+        Vertex<T> destinationVertex = getOrCreateVertex(destination);
 
-        if (undirected)
-            map.get(dest).add(new Edge<>(dest, source, weight));
+        if (sourceVertex.hasAdjacentVertex(destinationVertex)) {
+            return;
+        }
+
+        sourceVertex.addAdjacentVertex(destinationVertex, weight);
+        if (undirected) {
+            destinationVertex.addAdjacentVertex(sourceVertex, weight);
+        }
     }
 
     public int getVerticesCount() {
-        return map.size();
+        return vertices.size();
     }
 
     public int getEdgesCount() {
         int count = 0;
-        for (Vertex v : map.keySet()) {
-            count += map.get(v).size();
+        for (Vertex<T> vertex : vertices.values()) {
+            count += vertex.getAdjacentVertices().size();
         }
 
-        if (undirected)
+        if (undirected) {
             count /= 2;
+        }
 
         return count;
     }
 
-
-    public boolean hasVertex(Vertex v) {
-        return map.containsKey(v);
+    public boolean hasVertex(T data) {
+        return vertices.containsKey(data);
     }
 
-    public boolean hasEdge(Vertex source, Vertex dest) {
-        if (!hasVertex(source)) return false;
-
-        return map.get(source).contains(new Edge<>(source, dest));
-    }
-
-    public List<Vertex> adjacencyList(Vertex v) {
-        if (!hasVertex(v)) return null;
-
-        List<Vertex> vertices = new LinkedList<>();
-        for (Edge<Vertex> e : map.get(v)) {
-            vertices.add(e.getDest());
+    public boolean hasEdge(T source, T destination) {
+        if (!hasVertex(source)) {
+            return false;
         }
 
-        return vertices;
+        if (!hasVertex(destination)) {
+            return false;
+        }
+
+        Vertex<T> sourceVertex = vertices.get(source);
+        Vertex<T> destinationVertex = vertices.get(destination);
+        return sourceVertex.hasAdjacentVertex(destinationVertex);
     }
 
-    public Iterable<Edge<Vertex>> getEdges(Vertex v) {
-        if (!hasVertex(v)) return null;
+    public List<T> adjacencyList(T data) {
+        if (!hasVertex(data)) {
+            return null;
+        }
 
-        return map.get(v);
+        List<T> adjacentData = new ArrayList<>();
+        Vertex<T> vertex = vertices.get(data);
+        for (Vertex<T> adjacentVertex : vertex.getAdjacentVertices().keySet()) {
+            adjacentData.add(adjacentVertex.getData());
+        }
+
+        return adjacentData;
+    }
+
+    public double getWeight(T source, T destination) {
+        if (!hasEdge(source, destination)) {
+            throw new IllegalArgumentException("Edge does not exist");
+        }
+
+        Vertex<T> sourceVertex = vertices.get(source);
+        Vertex<T> destinationVertex = vertices.get(destination);
+        return sourceVertex.getWeightTo(destinationVertex);
+    }
+
+    private Vertex<T> getOrCreateVertex(T data) {
+        if (!hasVertex(data)) {
+            addVertex(data);
+        }
+
+        return vertices.get(data);
     }
 }

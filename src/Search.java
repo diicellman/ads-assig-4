@@ -1,31 +1,42 @@
-import java.util.*;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedList;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
 
-public class Search<Vertex> {
-    protected Set<Vertex> marked;
-    protected Map<Vertex, Vertex> edgeTo;
-    protected final Vertex source;
+public class Search<T> {
+    protected final Set<T> marked;
+    protected final Map<T, T> edgeTo;
+    protected final T source;
 
-    public Search(Vertex source) {
+    public Search(T source) {
         this.source = source;
         marked = new HashSet<>();
         edgeTo = new HashMap<>();
     }
 
-    public boolean hasPathTo(Vertex v) {
-        return marked.contains(v);
+    public boolean hasPathTo(T destination) {
+        return marked.contains(destination);
     }
 
-    public Iterable<Vertex> pathTo(Vertex v) {
-        if (!hasPathTo(v)) return null;
-
-        LinkedList<Vertex> ls = new LinkedList<>();
-        for (Vertex i = v; i != source; i = edgeTo.get(i)) {
-            ls.push(i); // inverted adding
+    public Iterable<T> pathTo(T destination) {
+        if (!hasPathTo(destination)) {
+            return Collections.emptyList();
         }
 
-        ls.push(source);
+        LinkedList<T> path = new LinkedList<>();
+        for (T current = destination; !Objects.equals(current, source); current = edgeTo.get(current)) {
+            if (current == null) {
+                return Collections.emptyList();
+            }
 
-        return ls;
+            path.push(current);
+        }
+
+        path.push(source);
+
+        return path;
     }
 }
-
